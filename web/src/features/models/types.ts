@@ -281,7 +281,7 @@ export const modelFormSchema = z.object({
   status: z.boolean().default(true),
   sync_official: z.boolean().default(true),
   show_usage: z.boolean().default(false),
-  usage_source: z.enum(['', 'codex', 'antigravity']).default(''),
+  usage_source: z.enum(['', 'codex', 'antigravity', 'opendesign']).default(''),
   usage_channel_id: z.number().int().min(0).default(0),
   usage_bucket_ids: z.string().default(''),
 })

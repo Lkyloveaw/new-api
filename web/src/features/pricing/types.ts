@@ -60,7 +60,7 @@ export type PricingModel = {
   id: number
   model_name: string
   show_usage?: boolean
-  usage_source?: 'codex' | 'antigravity'
+  usage_source?: 'codex' | 'antigravity' | 'opendesign'
   description?: string
   icon?: string
   vendor_id?: number
@@ -114,7 +114,7 @@ export type PricingUsageWindow = {
 }
 
 export type PricingUsageSnapshot = {
-  source: 'codex' | 'antigravity'
+  source: 'codex' | 'antigravity' | 'opendesign'
   status: 'ok' | 'unavailable'
   windows: PricingUsageWindow[]
   updated_at?: number

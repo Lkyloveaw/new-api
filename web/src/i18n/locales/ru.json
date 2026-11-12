@@ -7365,11 +7365,14 @@
     "Usage source": "Источник лимита",
     "Codex OAuth": "Codex OAuth",
     "Antigravity": "Antigravity",
+    "OpenDesign": "OpenDesign",
     "Select a usage source": "Выберите источник лимита",
     "Codex channel ID": "ID канала Codex",
     "Use the ID of the Codex OAuth channel whose quota should be shown.": "Укажите ID канала Codex OAuth, лимит которого нужно показывать.",
     "Antigravity quota bucket IDs": "ID групп квот Antigravity",
+    "OpenDesign quota bucket IDs": "ID групп квот OpenDesign",
     "Enter the exact quota bucket IDs from the Antigravity status snapshot, separated by commas. Only these buckets will be shown for this model.": "Укажите точные ID групп квот из снимка состояния Antigravity через запятую. Для этой модели будут показаны только эти группы.",
+    "Enter the OpenDesign quota windows from the OpenDesign usage snapshot, separated by commas: od-5h for the 5-hour window and od-weekly for the weekly window. Only these windows will be shown for this model.": "Укажите окна квот из снимка использования OpenDesign через запятую: od-5h для пятичасового окна и od-weekly для недельного окна. Для этой модели будут показаны только эти окна.",
     "Remaining usage": "Остаток лимита",
     "Loading usage...": "Загрузка лимита...",
     "Usage unavailable": "Лимит недоступен",
@@ -7378,8 +7381,11 @@
     "Codex usage channel not found": "Канал лимита Codex не найден",
     "Usage channel must be a Codex channel": "Канал лимита должен быть каналом Codex",
     "Antigravity usage does not use a channel ID": "Лимит Antigravity не использует ID канала",
+    "OpenDesign usage does not use a channel ID": "Лимит OpenDesign не использует ID канала",
     "Invalid model usage source": "Недопустимый источник лимита модели",
     "Invalid Antigravity usage bucket IDs": "Недопустимые ID групп квот Antigravity",
-    "Enter Antigravity quota bucket IDs": "Укажите ID групп квот Antigravity"
+    "Invalid OpenDesign usage bucket IDs": "Недопустимые ID групп квот OpenDesign",
+    "Enter Antigravity quota bucket IDs": "Укажите ID групп квот Antigravity",
+    "Enter OpenDesign quota bucket IDs": "Укажите ID групп квот OpenDesign"
   }
 }

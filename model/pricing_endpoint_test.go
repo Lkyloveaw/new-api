@@ -281,6 +281,12 @@ func TestModelUsageSettingsRejectInvalidSourceAndChannel(t *testing.T) {
 		{name: "antigravity rejects punctuation only ID", model: Model{ShowUsage: true, UsageSource: "antigravity", UsageBucketIDs: ".."}, wantErr: true},
 		{name: "antigravity rejects duplicate ID", model: Model{ShowUsage: true, UsageSource: "antigravity", UsageBucketIDs: "gemini-weekly,gemini-weekly"}, wantErr: true},
 		{name: "antigravity rejects too many IDs", model: Model{ShowUsage: true, UsageSource: "antigravity", UsageBucketIDs: "a,b,c,d,e,f,g,h,i"}, wantErr: true},
+		{name: "opendesign needs bucket IDs", model: Model{ShowUsage: true, UsageSource: "opendesign"}, wantErr: true},
+		{name: "opendesign accepts selected buckets", model: Model{ShowUsage: true, UsageSource: "opendesign", UsageBucketIDs: "od-5h,od-weekly"}, wantErr: false},
+		{name: "opendesign rejects channel", model: Model{ShowUsage: true, UsageSource: "opendesign", UsageChannelID: 603}, wantErr: true},
+		{name: "opendesign rejects invalid ID", model: Model{ShowUsage: true, UsageSource: "opendesign", UsageBucketIDs: "od-5h,../secret"}, wantErr: true},
+		{name: "opendesign rejects duplicate ID", model: Model{ShowUsage: true, UsageSource: "opendesign", UsageBucketIDs: "od-5h,od-5h"}, wantErr: true},
+		{name: "opendesign rejects too many IDs", model: Model{ShowUsage: true, UsageSource: "opendesign", UsageBucketIDs: "a,b,c,d,e,f,g,h,i"}, wantErr: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			err := ValidateModelUsageSettings(&tc.model)

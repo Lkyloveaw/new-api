@@ -57,5 +57,34 @@ describe('model usage settings in the metadata drawer', () => {
     await user.click(screen.getByRole('option', { name: 'Antigravity' }))
     expect(screen.getByLabelText('Antigravity quota bucket IDs')).toBeVisible()
     expect(screen.queryByLabelText('Codex channel ID')).not.toBeInTheDocument()
+
+    await user.type(
+      screen.getByLabelText('Antigravity quota bucket IDs'),
+      'gemini-5h'
+    )
+    await user.click(screen.getByRole('combobox', { name: 'Usage source' }))
+    await user.click(screen.getByRole('option', { name: 'OpenDesign' }))
+    expect(screen.getByLabelText('OpenDesign quota bucket IDs')).toHaveValue(
+      'od-5h, od-weekly'
+    )
+    await user.clear(screen.getByLabelText('OpenDesign quota bucket IDs'))
+    await user.type(
+      screen.getByLabelText('OpenDesign quota bucket IDs'),
+      'od-weekly'
+    )
+    await user.click(screen.getByRole('combobox', { name: 'Usage source' }))
+    await user.click(screen.getByRole('option', { name: 'Antigravity' }))
+    expect(screen.getByLabelText('Antigravity quota bucket IDs')).toHaveValue(
+      'gemini-5h'
+    )
+    await user.click(screen.getByRole('combobox', { name: 'Usage source' }))
+    await user.click(screen.getByRole('option', { name: 'OpenDesign' }))
+    expect(screen.getByLabelText('OpenDesign quota bucket IDs')).toHaveValue(
+      'od-weekly'
+    )
+    expect(
+      screen.queryByLabelText('Antigravity quota bucket IDs')
+    ).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Codex channel ID')).not.toBeInTheDocument()
   })
 })

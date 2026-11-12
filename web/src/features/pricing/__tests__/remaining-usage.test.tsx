@@ -147,6 +147,51 @@ describe('remaining quota on the model square', () => {
     expect(within(bucket).queryByRole('progressbar')).not.toBeInTheDocument()
   })
 
+  it('renders OpenDesign windows from its own snapshot', () => {
+    render(
+      <ModelRemainingUsage
+        model={{ ...model, usage_source: 'opendesign' }}
+        usage={{
+          source: 'opendesign',
+          status: 'ok',
+          windows: [
+            {
+              bucket: 'od-5h',
+              label: 'od-5h',
+              remaining_percent: 90.46,
+            },
+            {
+              bucket: 'od-weekly',
+              label: 'od-weekly',
+              remaining_percent: 59.74,
+            },
+          ],
+        }}
+      />
+    )
+
+    const fiveHour = screen.getByRole('group', { name: 'od-5h' })
+    const weekly = screen.getByRole('group', { name: 'od-weekly' })
+    expect(within(fiveHour).getByText('90.46%')).toBeVisible()
+    expect(within(fiveHour).getByRole('progressbar')).toHaveAttribute(
+      'aria-valuenow',
+      '90.46'
+    )
+    expect(within(weekly).getByText('59.74%')).toBeVisible()
+  })
+
+  it('shows OpenDesign as unavailable when its snapshot has no window', () => {
+    render(
+      <ModelRemainingUsage
+        model={{ ...model, usage_source: 'opendesign' }}
+        usage={{ source: 'opendesign', status: 'unavailable', windows: [] }}
+      />
+    )
+
+    expect(screen.getByText('Usage unavailable')).toBeVisible()
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+  })
+
   it('keeps each bucket reset time available on its own progress row', () => {
     render(
       <ModelRemainingUsage

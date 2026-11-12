@@ -300,28 +300,51 @@ func ValidateModelUsageSettings(mi *Model) error {
 		if len(mi.UsageBucketIDs) == 0 || len(mi.UsageBucketIDs) > 519 {
 			return errors.New("Invalid Antigravity usage bucket IDs")
 		}
-		ids := make([]string, 0, 8)
-		seen := make(map[string]bool)
-		for raw := range strings.SplitSeq(mi.UsageBucketIDs, ",") {
-			id := strings.TrimSpace(raw)
-			if len(id) == 0 || len(id) > 64 || seen[id] || len(ids) == 8 {
-				return errors.New("Invalid Antigravity usage bucket IDs")
-			}
-			for i := range len(id) {
-				b := id[i]
-				letterOrDigit := (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9')
-				if !letterOrDigit && (i == 0 || (b != '-' && b != '_' && b != '.' && b != ':')) {
-					return errors.New("Invalid Antigravity usage bucket IDs")
-				}
-			}
-			seen[id] = true
-			ids = append(ids, id)
+		ids, err := normalizeUsageBucketIDs(mi.UsageBucketIDs)
+		if err != nil {
+			return errors.New("Invalid Antigravity usage bucket IDs")
+		}
+		mi.UsageBucketIDs = strings.Join(ids, ",")
+	case "opendesign":
+		if mi.UsageChannelID != 0 {
+			return errors.New("OpenDesign usage does not use a channel ID")
+		}
+		if len(mi.UsageBucketIDs) == 0 || len(mi.UsageBucketIDs) > 519 {
+			return errors.New("Invalid OpenDesign usage bucket IDs")
+		}
+		ids, err := normalizeUsageBucketIDs(mi.UsageBucketIDs)
+		if err != nil {
+			return errors.New("Invalid OpenDesign usage bucket IDs")
 		}
 		mi.UsageBucketIDs = strings.Join(ids, ",")
 	default:
 		return errors.New("Invalid model usage source")
 	}
 	return nil
+}
+
+// normalizeUsageBucketIDs validates snapshot bucket selectors shared by the
+// file-backed usage sources. At most eight unique IDs of up to 64 characters
+// from a conservative allowlist; each ID must start with a letter or digit.
+func normalizeUsageBucketIDs(value string) ([]string, error) {
+	ids := make([]string, 0, 8)
+	seen := make(map[string]bool)
+	for raw := range strings.SplitSeq(value, ",") {
+		id := strings.TrimSpace(raw)
+		if len(id) == 0 || len(id) > 64 || seen[id] || len(ids) == 8 {
+			return nil, errors.New("invalid usage bucket IDs")
+		}
+		for i := range len(id) {
+			b := id[i]
+			letterOrDigit := (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9')
+			if !letterOrDigit && (i == 0 || (b != '-' && b != '_' && b != '.' && b != ':')) {
+				return nil, errors.New("invalid usage bucket IDs")
+			}
+		}
+		seen[id] = true
+		ids = append(ids, id)
+	}
+	return ids, nil
 }
 
 func (mi *Model) Delete() error {

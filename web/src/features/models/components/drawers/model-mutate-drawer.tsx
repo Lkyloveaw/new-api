@@ -114,6 +114,7 @@ export function ModelMutateDrawer(props: {
   )
   const [closeConfirm, setCloseConfirm] = useState(false)
   const loadedKey = useRef('')
+  const usageBucketsBySource = useRef<Record<string, string>>({})
   const form = useForm({
     resolver: zodResolver(modelFormSchema),
     defaultValues: MODEL_FORM_DEFAULT_VALUES,
@@ -162,12 +163,14 @@ export function ModelMutateDrawer(props: {
       form.reset(MODEL_FORM_DEFAULT_VALUES)
       setCreatedModel(null)
       loadedKey.current = ''
+      usageBucketsBySource.current = {}
       return
     }
     const key = currentRow?.id
       ? `metadata:${currentRow.id}`
       : `channel:${currentRow?.model_name ?? ''}`
     if (loadedKey.current === key || (isEditing && !modelQuery.data)) return
+    usageBucketsBySource.current = {}
     form.reset(
       isEditing && modelQuery.data
         ? transformModelToFormDefaults(modelQuery.data)
@@ -621,9 +624,25 @@ export function ModelMutateDrawer(props: {
                                 <FormControl>
                                   <Combobox
                                     value={field.value}
-                                    onValueChange={(value) =>
+                                    onValueChange={(value) => {
+                                      if (value !== field.value) {
+                                        usageBucketsBySource.current[
+                                          field.value ?? ''
+                                        ] =
+                                          form.getValues('usage_bucket_ids') ??
+                                          ''
+                                        form.setValue(
+                                          'usage_bucket_ids',
+                                          usageBucketsBySource.current[
+                                            value ?? ''
+                                          ] ??
+                                            (value === 'opendesign'
+                                              ? 'od-5h, od-weekly'
+                                              : '')
+                                        )
+                                      }
                                       field.onChange(value ?? '')
-                                    }
+                                    }}
                                     options={[
                                       {
                                         value: 'codex',
@@ -632,6 +651,10 @@ export function ModelMutateDrawer(props: {
                                       {
                                         value: 'antigravity',
                                         label: t('Antigravity'),
+                                      },
+                                      {
+                                        value: 'opendesign',
+                                        label: t('OpenDesign'),
                                       },
                                     ]}
                                     aria-label={t('Usage source')}
@@ -691,6 +714,31 @@ export function ModelMutateDrawer(props: {
                                   <FormDescription>
                                     {t(
                                       'Enter the exact quota bucket IDs from the Antigravity status snapshot, separated by commas. Only these buckets will be shown for this model.'
+                                    )}
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
+                          {form.watch('usage_source') === 'opendesign' && (
+                            <FormField
+                              control={form.control}
+                              name='usage_bucket_ids'
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>
+                                    {t('OpenDesign quota bucket IDs')}
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      placeholder='od-5h, od-weekly'
+                                    />
+                                  </FormControl>
+                                  <FormDescription>
+                                    {t(
+                                      'Enter the OpenDesign quota windows from the OpenDesign usage snapshot, separated by commas: od-5h for the 5-hour window and od-weekly for the weekly window. Only these windows will be shown for this model.'
                                     )}
                                   </FormDescription>
                                   <FormMessage />

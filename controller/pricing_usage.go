@@ -38,6 +38,28 @@ func unavailablePricingUsage(source string) pricingUsageSnapshot {
 	return pricingUsageSnapshot{Source: source, Status: "unavailable", Windows: []pricingUsageWindow{}}
 }
 
+// fileUsageSources are the sources published by a host-side collector as a
+// read-only snapshot file. Each one owns a separate file and environment
+// variable so one provider's data can never be read as another's.
+var fileUsageSources = map[string]struct {
+	envVar      string
+	defaultPath string
+}{
+	"antigravity": {envVar: "ANTIGRAVITY_USAGE_FILE"},
+	"opendesign":  {envVar: "OPENDESIGN_USAGE_FILE", defaultPath: "/usage/opendesign-usage.json"},
+}
+
+func fileUsageSnapshotPath(source string) string {
+	config, ok := fileUsageSources[source]
+	if !ok {
+		return ""
+	}
+	if path := strings.TrimSpace(os.Getenv(config.envVar)); path != "" {
+		return path
+	}
+	return config.defaultPath
+}
+
 type codexPricingUsageCacheEntry struct {
 	mu        sync.Mutex
 	snapshot  pricingUsageSnapshot
@@ -60,7 +82,7 @@ func GetPricingUsage(c *gin.Context) {
 	}
 	pricing := filterPricingByUsableGroups(model.GetPricing(), service.GetUserUsableGroups(group))
 	channelIDs := make(map[int]struct{})
-	needsAntigravity := false
+	neededFileSources := make(map[string]bool)
 	for _, item := range pricing {
 		if !item.ShowUsage {
 			continue
@@ -70,8 +92,10 @@ func GetPricingUsage(c *gin.Context) {
 			if item.UsageChannelID > 0 {
 				channelIDs[item.UsageChannelID] = struct{}{}
 			}
-		case "antigravity":
-			needsAntigravity = true
+		default:
+			if _, ok := fileUsageSources[item.UsageSource]; ok {
+				neededFileSources[item.UsageSource] = true
+			}
 		}
 	}
 
@@ -97,15 +121,20 @@ func GetPricingUsage(c *gin.Context) {
 	}
 	wg.Wait()
 
-	antigravityUsage := unavailablePricingUsage("antigravity")
-	if needsAntigravity {
-		antigravityUsage = readAntigravityUsageSnapshot(os.Getenv("ANTIGRAVITY_USAGE_FILE"), time.Now())
+	fileUsage := make(map[string]pricingUsageSnapshot, len(neededFileSources))
+	for source := range neededFileSources {
+		fileUsage[source] = unavailablePricingUsage(source)
 	}
-	result := buildPricingUsageResult(pricing, channelUsage, antigravityUsage)
+	// Snapshots are small local files; reading them inline keeps the response
+	// cheap and avoids a second timeout budget next to the Codex fetches.
+	for source := range neededFileSources {
+		fileUsage[source] = readUsageSnapshot(source, fileUsageSnapshotPath(source), time.Now())
+	}
+	result := buildPricingUsageResult(pricing, channelUsage, fileUsage)
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": result})
 }
 
-func buildPricingUsageResult(pricing []model.Pricing, channelUsage map[int]pricingUsageSnapshot, antigravityUsage pricingUsageSnapshot) map[string]pricingUsageSnapshot {
+func buildPricingUsageResult(pricing []model.Pricing, channelUsage map[int]pricingUsageSnapshot, fileUsage map[string]pricingUsageSnapshot) map[string]pricingUsageSnapshot {
 	result := make(map[string]pricingUsageSnapshot)
 	for _, item := range pricing {
 		if !item.ShowUsage {
@@ -118,8 +147,12 @@ func buildPricingUsageResult(pricing []model.Pricing, channelUsage map[int]prici
 			} else {
 				result[item.ModelName] = unavailablePricingUsage("codex")
 			}
-		case "antigravity":
-			result[item.ModelName] = selectAntigravityUsageBuckets(antigravityUsage, item.UsageBucketIDs)
+		default:
+			usage, ok := fileUsage[item.UsageSource]
+			if !ok {
+				continue
+			}
+			result[item.ModelName] = selectUsageSnapshotBuckets(usage, item.UsageBucketIDs)
 		}
 	}
 	return result
@@ -227,8 +260,11 @@ type codexPricingWindow struct {
 	LimitWindowSeconds int64    `json:"limit_window_seconds"`
 }
 
-func readAntigravityUsageSnapshot(path string, now time.Time) pricingUsageSnapshot {
-	usage := unavailablePricingUsage("antigravity")
+// readUsageSnapshot reads a read-only collector snapshot for one file-backed
+// usage source. Both providers share the same on-disk contract, so the parser
+// lives here once instead of per provider.
+func readUsageSnapshot(source, path string, now time.Time) pricingUsageSnapshot {
+	usage := unavailablePricingUsage(source)
 	if path == "" {
 		return usage
 	}
@@ -305,7 +341,7 @@ func readAntigravityUsageSnapshot(path string, now time.Time) pricingUsageSnapsh
 	return usage
 }
 
-func selectAntigravityUsageBuckets(usage pricingUsageSnapshot, bucketIDs string) pricingUsageSnapshot {
+func selectUsageSnapshotBuckets(usage pricingUsageSnapshot, bucketIDs string) pricingUsageSnapshot {
 	if usage.Status != "ok" {
 		return usage
 	}
@@ -315,7 +351,7 @@ func selectAntigravityUsageBuckets(usage pricingUsageSnapshot, bucketIDs string)
 			selected[id] = struct{}{}
 		}
 	}
-	filtered := unavailablePricingUsage("antigravity")
+	filtered := unavailablePricingUsage(usage.Source)
 	for _, window := range usage.Windows {
 		if _, ok := selected[window.Bucket]; ok {
 			filtered.Windows = append(filtered.Windows, window)

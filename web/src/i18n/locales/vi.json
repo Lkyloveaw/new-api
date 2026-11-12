@@ -7365,11 +7365,14 @@
     "Usage source": "Nguồn hạn mức",
     "Codex OAuth": "Codex OAuth",
     "Antigravity": "Antigravity",
+    "OpenDesign": "OpenDesign",
     "Select a usage source": "Chọn nguồn hạn mức",
     "Codex channel ID": "ID kênh Codex",
     "Use the ID of the Codex OAuth channel whose quota should be shown.": "Nhập ID kênh Codex OAuth có hạn mức cần hiển thị.",
     "Antigravity quota bucket IDs": "ID nhóm hạn mức Antigravity",
+    "OpenDesign quota bucket IDs": "ID nhóm hạn mức OpenDesign",
     "Enter the exact quota bucket IDs from the Antigravity status snapshot, separated by commas. Only these buckets will be shown for this model.": "Nhập đúng ID nhóm hạn mức từ bản chụp trạng thái Antigravity, phân tách bằng dấu phẩy. Chỉ các nhóm này được hiển thị cho mô hình.",
+    "Enter the OpenDesign quota windows from the OpenDesign usage snapshot, separated by commas: od-5h for the 5-hour window and od-weekly for the weekly window. Only these windows will be shown for this model.": "Nhập các cửa sổ hạn mức từ bản chụp mức dùng OpenDesign, cách nhau bằng dấu phẩy: od-5h cho cửa sổ 5 giờ và od-weekly cho cửa sổ hàng tuần. Chỉ những cửa sổ này được hiển thị cho mô hình này.",
     "Remaining usage": "Hạn mức còn lại",
     "Loading usage...": "Đang tải hạn mức...",
     "Usage unavailable": "Không có dữ liệu hạn mức",
@@ -7378,8 +7381,11 @@
     "Codex usage channel not found": "Không tìm thấy kênh hạn mức Codex",
     "Usage channel must be a Codex channel": "Kênh hạn mức phải là kênh Codex",
     "Antigravity usage does not use a channel ID": "Hạn mức Antigravity không dùng ID kênh",
+    "OpenDesign usage does not use a channel ID": "Hạn mức OpenDesign không dùng ID kênh",
     "Invalid model usage source": "Nguồn hạn mức mô hình không hợp lệ",
     "Invalid Antigravity usage bucket IDs": "ID nhóm hạn mức Antigravity không hợp lệ",
-    "Enter Antigravity quota bucket IDs": "Nhập ID nhóm hạn mức Antigravity"
+    "Invalid OpenDesign usage bucket IDs": "ID nhóm hạn mức OpenDesign không hợp lệ",
+    "Enter Antigravity quota bucket IDs": "Nhập ID nhóm hạn mức Antigravity",
+    "Enter OpenDesign quota bucket IDs": "Nhập ID nhóm hạn mức OpenDesign"
   }
 }

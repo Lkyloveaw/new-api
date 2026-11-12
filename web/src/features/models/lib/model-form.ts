@@ -41,7 +41,9 @@ export const modelFormSchema = z
     status: z.boolean().default(true),
     sync_official: z.boolean().default(true),
     show_usage: z.boolean().default(false),
-    usage_source: z.enum(['', 'codex', 'antigravity']).default(''),
+    usage_source: z
+      .enum(['', 'codex', 'antigravity', 'opendesign'])
+      .default(''),
     usage_channel_id: z.number().int().min(0).default(0),
     usage_bucket_ids: z.string().default(''),
     enable_groups: z.array(z.string()).default([]),
@@ -71,6 +73,16 @@ export const modelFormSchema = z
         code: 'custom',
         path: ['usage_bucket_ids'],
         message: 'Enter Antigravity quota bucket IDs',
+      })
+    }
+    if (
+      values.usage_source === 'opendesign' &&
+      values.usage_bucket_ids.trim() === ''
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['usage_bucket_ids'],
+        message: 'Enter OpenDesign quota bucket IDs',
       })
     }
   })
@@ -133,7 +145,9 @@ export function transformModelToFormDefaults(model: Model): ModelFormValues {
     sync_official: model.sync_official === 1,
     show_usage: model.show_usage ?? false,
     usage_source:
-      model.usage_source === 'codex' || model.usage_source === 'antigravity'
+      model.usage_source === 'codex' ||
+      model.usage_source === 'antigravity' ||
+      model.usage_source === 'opendesign'
         ? model.usage_source
         : '',
     usage_channel_id: model.usage_channel_id ?? 0,
@@ -165,7 +179,8 @@ export function transformFormDataToModelPayload(
     usage_channel_id:
       formData.usage_source === 'codex' ? formData.usage_channel_id : 0,
     usage_bucket_ids:
-      formData.usage_source === 'antigravity'
+      formData.usage_source === 'antigravity' ||
+      formData.usage_source === 'opendesign'
         ? formData.usage_bucket_ids.trim()
         : '',
     enable_groups: formData.enable_groups,

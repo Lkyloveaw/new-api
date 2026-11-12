@@ -1,0 +1,9 @@
+[Unit]
+Description=Refresh sanitized OpenDesign quota snapshot for New API
+
+[Service]
+Type=oneshot
+EnvironmentFile=/vol1/1000/docker/newapi/usage/collector/quota-collector.env
+WorkingDirectory=/vol1/1000/docker/newapi/usage/collector
+ExecStart=/vol1/1000/docker/newapi/usage/collector/bin/node /vol1/1000/docker/newapi/usage/collector/opendesign-direct-quota.mjs
+NoNewPrivileges=yes

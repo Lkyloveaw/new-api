@@ -7365,11 +7365,14 @@
     "Usage source": "Usage source",
     "Codex OAuth": "Codex OAuth",
     "Antigravity": "Antigravity",
+    "OpenDesign": "OpenDesign",
     "Select a usage source": "Select a usage source",
     "Codex channel ID": "Codex channel ID",
     "Use the ID of the Codex OAuth channel whose quota should be shown.": "Use the ID of the Codex OAuth channel whose quota should be shown.",
     "Antigravity quota bucket IDs": "Antigravity quota bucket IDs",
+    "OpenDesign quota bucket IDs": "OpenDesign quota bucket IDs",
     "Enter the exact quota bucket IDs from the Antigravity status snapshot, separated by commas. Only these buckets will be shown for this model.": "Enter the exact quota bucket IDs from the Antigravity status snapshot, separated by commas. Only these buckets will be shown for this model.",
+    "Enter the OpenDesign quota windows from the OpenDesign usage snapshot, separated by commas: od-5h for the 5-hour window and od-weekly for the weekly window. Only these windows will be shown for this model.": "Enter the OpenDesign quota windows from the OpenDesign usage snapshot, separated by commas: od-5h for the 5-hour window and od-weekly for the weekly window. Only these windows will be shown for this model.",
     "Remaining usage": "Remaining usage",
     "Loading usage...": "Loading usage...",
     "Usage unavailable": "Usage unavailable",
@@ -7378,8 +7381,11 @@
     "Codex usage channel not found": "Codex usage channel not found",
     "Usage channel must be a Codex channel": "Usage channel must be a Codex channel",
     "Antigravity usage does not use a channel ID": "Antigravity usage does not use a channel ID",
+    "OpenDesign usage does not use a channel ID": "OpenDesign usage does not use a channel ID",
     "Invalid model usage source": "Invalid model usage source",
     "Invalid Antigravity usage bucket IDs": "Invalid Antigravity usage bucket IDs",
-    "Enter Antigravity quota bucket IDs": "Enter Antigravity quota bucket IDs"
+    "Invalid OpenDesign usage bucket IDs": "Invalid OpenDesign usage bucket IDs",
+    "Enter Antigravity quota bucket IDs": "Enter Antigravity quota bucket IDs",
+    "Enter OpenDesign quota bucket IDs": "Enter OpenDesign quota bucket IDs"
   }
 }

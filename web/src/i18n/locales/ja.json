@@ -7365,11 +7365,14 @@
     "Usage source": "使用枠の取得元",
     "Codex OAuth": "Codex OAuth",
     "Antigravity": "Antigravity",
+    "OpenDesign": "OpenDesign",
     "Select a usage source": "使用枠の取得元を選択",
     "Codex channel ID": "Codex チャンネル ID",
     "Use the ID of the Codex OAuth channel whose quota should be shown.": "表示する使用枠の Codex OAuth チャンネル ID を入力します。",
     "Antigravity quota bucket IDs": "Antigravity クォータバケット ID",
+    "OpenDesign quota bucket IDs": "OpenDesign クォータバケット ID",
     "Enter the exact quota bucket IDs from the Antigravity status snapshot, separated by commas. Only these buckets will be shown for this model.": "Antigravity のステータススナップショットにある正確なクォータバケット ID をカンマで区切って入力してください。このモデルには指定したバケットのみ表示されます。",
+    "Enter the OpenDesign quota windows from the OpenDesign usage snapshot, separated by commas: od-5h for the 5-hour window and od-weekly for the weekly window. Only these windows will be shown for this model.": "OpenDesign の使用量スナップショットにあるクォータ枠をカンマ区切りで入力します。od-5h は 5 時間枠、od-weekly は週次枠です。ここに挙げた枠だけがこのモデルに表示されます。",
     "Remaining usage": "残りの使用枠",
     "Loading usage...": "使用枠を読み込み中...",
     "Usage unavailable": "使用枠を取得できません",
@@ -7378,8 +7381,11 @@
     "Codex usage channel not found": "Codex の使用枠チャンネルが見つかりません",
     "Usage channel must be a Codex channel": "使用枠チャンネルは Codex チャンネルである必要があります",
     "Antigravity usage does not use a channel ID": "Antigravity の使用枠ではチャンネル ID を使用しません",
+    "OpenDesign usage does not use a channel ID": "OpenDesign の使用枠ではチャンネル ID を使用しません",
     "Invalid model usage source": "モデルの使用枠取得元が無効です",
     "Invalid Antigravity usage bucket IDs": "Antigravity クォータバケット ID が無効です",
-    "Enter Antigravity quota bucket IDs": "Antigravity クォータバケット ID を入力してください"
+    "Invalid OpenDesign usage bucket IDs": "OpenDesign クォータバケット ID が無効です",
+    "Enter Antigravity quota bucket IDs": "Antigravity クォータバケット ID を入力してください",
+    "Enter OpenDesign quota bucket IDs": "OpenDesign クォータバケット ID を入力してください"
   }
 }
