@@ -47,9 +47,13 @@ func FetchCodexWhamUsage(
 	}
 	defer resp.Body.Close()
 
-	body, err = io.ReadAll(resp.Body)
+	const maxUsageResponseBytes = 256 << 10
+	body, err = io.ReadAll(io.LimitReader(resp.Body, maxUsageResponseBytes+1))
 	if err != nil {
 		return resp.StatusCode, nil, err
+	}
+	if len(body) > maxUsageResponseBytes {
+		return resp.StatusCode, nil, fmt.Errorf("codex usage response exceeds %d bytes", maxUsageResponseBytes)
 	}
 	return resp.StatusCode, body, nil
 }

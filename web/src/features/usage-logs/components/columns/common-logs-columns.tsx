@@ -55,6 +55,7 @@ import { useSystemConfigStore } from '@/stores/system-config-store'
 
 import { LOG_TYPE_ALL_VALUE } from '../../constants'
 import type { UsageLog } from '../../data/schema'
+import { getLogCacheRate } from '../../lib/cache-rate'
 import {
   formatModelName,
   decodeBillingExprB64,
@@ -73,6 +74,7 @@ import {
   isPerCallBilling,
 } from '../../lib/utils'
 import type { LogOtherData } from '../../types'
+import { CacheRateTag } from '../cache-rate-tag'
 import { DetailsDialog } from '../dialogs/details-dialog'
 import { LogCostDisplay } from '../log-cost-display'
 import { ModelBadge } from '../model-badge'
@@ -735,17 +737,15 @@ export function useCommonLogsColumns(
 
           const promptTokens = log.prompt_tokens || 0
           const completionTokens = log.completion_tokens || 0
-          if (promptTokens === 0 && completionTokens === 0) {
+
+          // The list summarises cache usage as a hit rate with a tier marker;
+          // the raw cache read/write counts stay in the details dialog. A
+          // Claude request fully served from cache can have no ordinary input
+          // or output yet still report a rate, so the rate is read first.
+          const cacheRate = getLogCacheRate(log, other)
+          if (promptTokens === 0 && completionTokens === 0 && !cacheRate) {
             return <span className='text-muted-foreground text-xs'>-</span>
           }
-
-          const cacheReadTokens = other?.cache_tokens || 0
-          const cacheWrite5m = other?.cache_creation_tokens_5m || 0
-          const cacheWrite1h = other?.cache_creation_tokens_1h || 0
-          const hasSplitCache = cacheWrite5m > 0 || cacheWrite1h > 0
-          const cacheWriteTokens = hasSplitCache
-            ? cacheWrite5m + cacheWrite1h
-            : other?.cache_creation_tokens || 0
 
           return (
             <div className='flex flex-col gap-0.5'>
@@ -753,19 +753,8 @@ export function useCommonLogsColumns(
                 {promptTokens.toLocaleString()} /{' '}
                 {completionTokens.toLocaleString()}
               </span>
-              {(cacheReadTokens > 0 || cacheWriteTokens > 0) && (
-                <div className='flex items-center gap-1 text-[11px]'>
-                  {cacheReadTokens > 0 && (
-                    <span className='text-muted-foreground/60'>
-                      {t('Cache')}↓ {cacheReadTokens.toLocaleString()}
-                    </span>
-                  )}
-                  {cacheWriteTokens > 0 && (
-                    <span className='text-muted-foreground/60'>
-                      ↑ {cacheWriteTokens.toLocaleString()}
-                    </span>
-                  )}
-                </div>
+              {cacheRate && (
+                <CacheRateTag rate={cacheRate} className='text-[11px]' />
               )}
             </div>
           )

@@ -27,6 +27,10 @@ type PricingPluginVariant struct {
 type Pricing struct {
 	BillingPluginVariants  []PricingPluginVariant               `json:"billing_plugin_variants,omitempty"`
 	ModelName              string                               `json:"model_name"`
+	ShowUsage              bool                                 `json:"show_usage"`
+	UsageSource            string                               `json:"usage_source,omitempty"`
+	UsageChannelID         int                                  `json:"-"`
+	UsageBucketIDs         string                               `json:"-"`
 	Description            string                               `json:"description,omitempty"`
 	Icon                   string                               `json:"icon,omitempty"`
 	Tags                   string                               `json:"tags,omitempty"`
@@ -339,6 +343,12 @@ func updatePricing() {
 				continue
 			}
 			pricing.Description = meta.Description
+			pricing.ShowUsage = meta.ShowUsage
+			if meta.ShowUsage {
+				pricing.UsageSource = meta.UsageSource
+				pricing.UsageChannelID = meta.UsageChannelID
+				pricing.UsageBucketIDs = meta.UsageBucketIDs
+			}
 			pricing.Icon = meta.Icon
 			pricing.Tags = meta.Tags
 			pricing.VendorID = meta.VendorID

@@ -64,6 +64,7 @@ import { useSystemConfigStore } from '@/stores/system-config-store'
 import { DEFAULT_TOKEN_UNIT } from '../constants'
 import { useBillingTime } from '../hooks/use-billing-time'
 import { usePricingData } from '../hooks/use-pricing-data'
+import { usePricingUsage } from '../hooks/use-pricing-usage'
 import type { ParsedTaskTier } from '../lib/billing-expr'
 import { formatBillingCondition } from '../lib/billing-expression/condition-display'
 import {
@@ -98,12 +99,14 @@ import type {
   ModelCapability,
   PriceType,
   PricingModel,
+  PricingUsageSnapshot,
   TokenUnit,
 } from '../types'
 import { DynamicPricingBreakdown } from './dynamic-pricing-breakdown'
 import { ModelBillingModeBadge } from './model-billing-mode-badge'
 import { ModelDetailsApi } from './model-details-api'
 import { ModelDetailsPerformance } from './model-details-performance'
+import { ModelRemainingUsage } from './model-remaining-usage'
 
 // ----------------------------------------------------------------------------
 // Local UI helpers
@@ -1458,6 +1461,8 @@ const TAB_META: Record<
 
 export interface ModelDetailsContentProps {
   model: PricingModel
+  usage?: PricingUsageSnapshot
+  usageLoading?: boolean
   groupRatio: Record<string, number>
   usableGroup: Record<string, { desc: string; ratio: number }>
   endpointMap: Record<string, { path?: string; method?: string }>
@@ -1509,6 +1514,16 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
 
         <TabsContent value='overview' className='space-y-6 outline-none'>
           <OverviewSummaryGrid model={props.model} />
+
+          {props.model.show_usage && (
+            <section className='bg-card/60 rounded-xl border p-4 shadow-sm'>
+              <ModelRemainingUsage
+                model={props.model}
+                usage={props.usage}
+                isLoading={props.usageLoading}
+              />
+            </section>
+          )}
 
           <section className='bg-card/60 space-y-5 rounded-xl border p-4 shadow-sm'>
             <SectionTitle>{t('Pricing')}</SectionTitle>
@@ -1611,6 +1626,7 @@ export function ModelDetails() {
     priceRate,
     usdExchangeRate,
   } = usePricingData()
+  const { usageByModel, usageLoading } = usePricingUsage(models)
 
   const tokenUnit: TokenUnit =
     search.tokenUnit === 'K' ? 'K' : DEFAULT_TOKEN_UNIT
@@ -1682,6 +1698,8 @@ export function ModelDetails() {
 
         <ModelDetailsContent
           model={model}
+          usage={usageByModel[model.model_name]}
+          usageLoading={usageLoading}
           groupRatio={groupRatio || {}}
           usableGroup={usableGroup || {}}
           autoGroups={autoGroups || []}

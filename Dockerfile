@@ -30,10 +30,18 @@ RUN go build -pgo="$(go list -m -f '{{.Dir}}' github.com/Calcium-Ion/moejs)/defa
 
 FROM debian:bookworm-slim@sha256:f06537653ac770703bc45b4b113475bd402f451e85223f0f2837acbf89ab020a
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates tzdata libasan8 wget \
+ARG DEBIAN_MIRROR=http://deb.debian.org
+RUN sed -i "s#http://deb.debian.org#${DEBIAN_MIRROR}#g" /etc/apt/sources.list.d/debian.sources \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates tzdata locales libasan8 wget \
+    && sed -i 's/^# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
+    && locale-gen \
+    && ln -snf /usr/share/zoneinfo/America/Los_Angeles /etc/localtime \
+    && printf '%s\n' America/Los_Angeles > /etc/timezone \
     && rm -rf /var/lib/apt/lists/* \
     && update-ca-certificates
+
+ENV LANG=en_US.UTF-8 TZ=America/Los_Angeles DEFAULT_LANGUAGE=en
 
 COPY --from=builder2 /build/new-api /
 COPY LICENSE NOTICE THIRD-PARTY-LICENSES.md /licenses/

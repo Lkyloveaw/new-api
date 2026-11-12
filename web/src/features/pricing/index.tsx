@@ -35,6 +35,7 @@ import {
 import { EXCLUDED_GROUPS, VIEW_MODES } from './constants'
 import { useFilters } from './hooks/use-filters'
 import { usePricingData } from './hooks/use-pricing-data'
+import { usePricingUsage } from './hooks/use-pricing-usage'
 
 export function Pricing() {
   const { t } = useTranslation()
@@ -53,6 +54,7 @@ export function Pricing() {
     priceRate,
     usdExchangeRate,
   } = usePricingData()
+  const { usageByModel, usageLoading } = usePricingUsage(models)
 
   const {
     searchInput,
@@ -131,6 +133,8 @@ export function Pricing() {
           tokenUnit={tokenUnit}
           showRechargePrice={showRechargePrice}
           selectedGroup={groupFilter}
+          usageByModel={usageByModel}
+          usageLoading={usageLoading}
         />
       )
     }
@@ -143,6 +147,8 @@ export function Pricing() {
         tokenUnit={tokenUnit}
         showRechargePrice={showRechargePrice}
         selectedGroup={groupFilter}
+        usageByModel={usageByModel}
+        usageLoading={usageLoading}
         onModelClick={handleModelClick}
       />
     )
@@ -278,6 +284,8 @@ export function Pricing() {
               autoGroups={autoGroups || []}
               priceRate={priceRate ?? 1}
               usdExchangeRate={usdExchangeRate ?? 1}
+              usage={usageByModel[selectedModel.model_name]}
+              usageLoading={usageLoading}
               tokenUnit={tokenUnit}
               showRechargePrice={showRechargePrice}
             />

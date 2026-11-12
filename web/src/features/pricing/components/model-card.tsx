@@ -40,9 +40,15 @@ import { parseTags } from '../lib/filters'
 import { isTokenBasedModel } from '../lib/model-helpers'
 import { formatPrice, formatRequestPrice } from '../lib/price'
 import { taskPriceLabel, taskUsageUnitLabel } from '../lib/task-price-display'
-import type { PricingModel, PriceType, TokenUnit } from '../types'
+import type {
+  PricingModel,
+  PricingUsageSnapshot,
+  PriceType,
+  TokenUnit,
+} from '../types'
 import { ModelBillingModeBadge } from './model-billing-mode-badge'
 import { ModelPerfBadge, type ModelPerfBadgeData } from './model-perf-badge'
+import { ModelRemainingUsage } from './model-remaining-usage'
 
 export interface ModelCardProps {
   model: PricingModel
@@ -53,6 +59,8 @@ export interface ModelCardProps {
   showRechargePrice?: boolean
   selectedGroup?: string
   perf?: ModelPerfBadgeData
+  usage?: PricingUsageSnapshot
+  usageLoading?: boolean
 }
 
 export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
@@ -325,6 +333,11 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
             </div>
           )}
         </div>
+        <ModelRemainingUsage
+          model={props.model}
+          usage={props.usage}
+          isLoading={props.usageLoading}
+        />
         <div
           role='group'
           aria-label={t('Pricing')}

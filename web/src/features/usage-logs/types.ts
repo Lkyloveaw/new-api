@@ -192,6 +192,12 @@ export interface LogOtherData {
   cache_creation_tokens_5m?: number
   cache_creation_tokens_1h?: number
   cache_creation_tokens_12h?: number
+  // Backend-normalized cache write total for display; merges the 5m/1h split,
+  // the 12h writes and the aggregate cache_creation_tokens.
+  cache_write_tokens?: number
+  // Backend-normalized total billing input, written only when the usage source
+  // already provided a reliable total.
+  input_tokens_total?: number
   claude?: boolean
   model_ratio?: number
   completion_ratio?: number

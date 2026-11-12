@@ -584,6 +584,122 @@ export function ModelMutateDrawer(props: {
                           </FormItem>
                         )}
                       />
+
+                      <FormField
+                        control={form.control}
+                        name='show_usage'
+                        render={({ field }) => (
+                          <FormItem className={sideDrawerSwitchItemClassName()}>
+                            <div className='flex flex-col gap-0.5'>
+                              <FormLabel className='text-base'>
+                                {t('Show remaining usage')}
+                              </FormLabel>
+                              <FormDescription>
+                                {t(
+                                  'Show provider quota windows for this model in the model square.'
+                                )}
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      {form.watch('show_usage') && (
+                        <>
+                          <FormField
+                            control={form.control}
+                            name='usage_source'
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{t('Usage source')}</FormLabel>
+                                <FormControl>
+                                  <Combobox
+                                    value={field.value}
+                                    onValueChange={(value) =>
+                                      field.onChange(value ?? '')
+                                    }
+                                    options={[
+                                      {
+                                        value: 'codex',
+                                        label: t('Codex OAuth'),
+                                      },
+                                      {
+                                        value: 'antigravity',
+                                        label: t('Antigravity'),
+                                      },
+                                    ]}
+                                    aria-label={t('Usage source')}
+                                    placeholder={t('Select a usage source')}
+                                    className='w-full'
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          {form.watch('usage_source') === 'codex' && (
+                            <FormField
+                              control={form.control}
+                              name='usage_channel_id'
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t('Codex channel ID')}</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type='number'
+                                      min={1}
+                                      step={1}
+                                      value={field.value || ''}
+                                      onChange={(event) =>
+                                        field.onChange(
+                                          Number(event.target.value) || 0
+                                        )
+                                      }
+                                    />
+                                  </FormControl>
+                                  <FormDescription>
+                                    {t(
+                                      'Use the ID of the Codex OAuth channel whose quota should be shown.'
+                                    )}
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
+                          {form.watch('usage_source') === 'antigravity' && (
+                            <FormField
+                              control={form.control}
+                              name='usage_bucket_ids'
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>
+                                    {t('Antigravity quota bucket IDs')}
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      placeholder='gemini-example-weekly, gemini-example-5h'
+                                    />
+                                  </FormControl>
+                                  <FormDescription>
+                                    {t(
+                                      'Enter the exact quota bucket IDs from the Antigravity status snapshot, separated by commas. Only these buckets will be shown for this model.'
+                                    )}
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
+                        </>
+                      )}
                     </SideDrawerSection>
                   </form>
                 </Form>

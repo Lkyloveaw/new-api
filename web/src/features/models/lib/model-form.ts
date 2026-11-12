@@ -28,20 +28,52 @@ import { parseModelTags as parseTagsFromUtils } from './model-utils'
 /**
  * Model form validation schema
  */
-export const modelFormSchema = z.object({
-  id: z.number().optional(),
-  model_name: z.string().min(1, 'Model name is required'),
-  description: z.string().default(''),
-  icon: z.string().default(''),
-  tags: z.array(z.string()).default([]),
-  vendor_id: z.number(),
-  endpoints: z.string().default(''),
-  name_rule: z.number().min(0).max(3).default(0),
-  status: z.boolean().default(true),
-  sync_official: z.boolean().default(true),
-  enable_groups: z.array(z.string()).default([]),
-  quota_types: z.array(z.number()).default([]),
-})
+export const modelFormSchema = z
+  .object({
+    id: z.number().optional(),
+    model_name: z.string().min(1, 'Model name is required'),
+    description: z.string().default(''),
+    icon: z.string().default(''),
+    tags: z.array(z.string()).default([]),
+    vendor_id: z.number(),
+    endpoints: z.string().default(''),
+    name_rule: z.number().min(0).max(3).default(0),
+    status: z.boolean().default(true),
+    sync_official: z.boolean().default(true),
+    show_usage: z.boolean().default(false),
+    usage_source: z.enum(['', 'codex', 'antigravity']).default(''),
+    usage_channel_id: z.number().int().min(0).default(0),
+    usage_bucket_ids: z.string().default(''),
+    enable_groups: z.array(z.string()).default([]),
+    quota_types: z.array(z.number()).default([]),
+  })
+  .superRefine((values, context) => {
+    if (!values.show_usage) return
+    if (!values.usage_source) {
+      context.addIssue({
+        code: 'custom',
+        path: ['usage_source'],
+        message: 'Select a usage source',
+      })
+    }
+    if (values.usage_source === 'codex' && values.usage_channel_id <= 0) {
+      context.addIssue({
+        code: 'custom',
+        path: ['usage_channel_id'],
+        message: 'Codex usage requires a channel ID',
+      })
+    }
+    if (
+      values.usage_source === 'antigravity' &&
+      values.usage_bucket_ids.trim() === ''
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['usage_bucket_ids'],
+        message: 'Enter Antigravity quota bucket IDs',
+      })
+    }
+  })
 
 export type ModelFormValues = z.infer<typeof modelFormSchema>
 
@@ -55,6 +87,10 @@ export const MODEL_FORM_DEFAULT_VALUES: ModelFormValues = {
   name_rule: 0,
   status: true,
   sync_official: true,
+  show_usage: false,
+  usage_source: '',
+  usage_channel_id: 0,
+  usage_bucket_ids: '',
   enable_groups: [],
   quota_types: [],
 }
@@ -95,6 +131,13 @@ export function transformModelToFormDefaults(model: Model): ModelFormValues {
     name_rule: model.name_rule || 0,
     status: model.status === 1,
     sync_official: model.sync_official === 1,
+    show_usage: model.show_usage ?? false,
+    usage_source:
+      model.usage_source === 'codex' || model.usage_source === 'antigravity'
+        ? model.usage_source
+        : '',
+    usage_channel_id: model.usage_channel_id ?? 0,
+    usage_bucket_ids: model.usage_bucket_ids ?? '',
     enable_groups: model.enable_groups || [],
     quota_types: model.quota_types || [],
   }
@@ -117,6 +160,14 @@ export function transformFormDataToModelPayload(
     name_rule: formData.name_rule,
     status: formData.status ? 1 : 0,
     sync_official: formData.sync_official ? 1 : 0,
+    show_usage: formData.show_usage,
+    usage_source: formData.usage_source,
+    usage_channel_id:
+      formData.usage_source === 'codex' ? formData.usage_channel_id : 0,
+    usage_bucket_ids:
+      formData.usage_source === 'antigravity'
+        ? formData.usage_bucket_ids.trim()
+        : '',
     enable_groups: formData.enable_groups,
     quota_types: formData.quota_types,
   }

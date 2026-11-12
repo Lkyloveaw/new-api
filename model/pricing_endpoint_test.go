@@ -190,6 +190,117 @@ func TestPricingNativeChannelEndpointTypesUnchanged(t *testing.T) {
 	assert.Equal(t, []constant.EndpointType{constant.EndpointTypeAnthropic, constant.EndpointTypeOpenAI}, byModel["claude-3-5-sonnet"])
 }
 
+func TestPricingShowsOnlyOptedInModelUsageSource(t *testing.T) {
+	resetPricingEndpointTestTables(t)
+	require.NoError(t, DB.AutoMigrate(&Option{}))
+	insertPricingEndpointChannel(t, 601, constant.ChannelTypeCodex, dto.ChannelOtherSettings{})
+	insertPricingEndpointChannel(t, 605, constant.ChannelTypeGemini, dto.ChannelOtherSettings{})
+	insertPricingEndpointAbility(t, 601, "gpt-usage")
+	insertPricingEndpointAbility(t, 601, "gpt-default")
+	insertPricingEndpointAbility(t, 605, "gemini-usage")
+	InitChannelCache()
+
+	configured := &Model{
+		ModelName:      "gpt-usage",
+		Status:         1,
+		ShowUsage:      true,
+		UsageSource:    "codex",
+		UsageChannelID: 601,
+	}
+	require.NoError(t, ValidateModelUsageSettings(configured))
+	require.NoError(t, configured.Insert())
+	antigravity := &Model{
+		ModelName:      "gemini-usage",
+		Status:         1,
+		ShowUsage:      true,
+		UsageSource:    "antigravity",
+		UsageBucketIDs: " gemini-5h , gemini-weekly ",
+	}
+	require.NoError(t, ValidateModelUsageSettings(antigravity))
+	require.Equal(t, "gemini-5h,gemini-weekly", antigravity.UsageBucketIDs)
+	require.NoError(t, antigravity.Insert())
+	var savedAntigravity Model
+	require.NoError(t, DB.First(&savedAntigravity, antigravity.Id).Error)
+	assert.True(t, savedAntigravity.ShowUsage)
+	assert.Equal(t, "gemini-5h,gemini-weekly", savedAntigravity.UsageBucketIDs)
+
+	byModel := make(map[string]Pricing)
+	for _, item := range GetPricing() {
+		byModel[item.ModelName] = item
+	}
+	require.Contains(t, byModel, "gpt-usage")
+	assert.True(t, byModel["gpt-usage"].ShowUsage)
+	assert.Equal(t, "codex", byModel["gpt-usage"].UsageSource)
+	assert.Equal(t, 601, byModel["gpt-usage"].UsageChannelID)
+	assert.False(t, byModel["gpt-default"].ShowUsage)
+	assert.Equal(t, "gemini-5h,gemini-weekly", byModel["gemini-usage"].UsageBucketIDs)
+	publicJSON, err := common.Marshal(byModel["gpt-usage"])
+	require.NoError(t, err)
+	assert.NotContains(t, string(publicJSON), "usage_channel_id")
+	publicJSON, err = common.Marshal(byModel["gemini-usage"])
+	require.NoError(t, err)
+	assert.NotContains(t, string(publicJSON), "usage_bucket_ids")
+
+	configured.ShowUsage = false
+	require.NoError(t, configured.Update())
+	var savedCodex Model
+	require.NoError(t, DB.First(&savedCodex, configured.Id).Error)
+	assert.False(t, savedCodex.ShowUsage)
+	InvalidatePricingCache()
+	found := false
+	for _, item := range GetPricing() {
+		if item.ModelName == "gpt-usage" {
+			found = true
+			assert.False(t, item.ShowUsage)
+			assert.Empty(t, item.UsageSource)
+		}
+	}
+	require.True(t, found)
+}
+
+func TestModelUsageSettingsRejectInvalidSourceAndChannel(t *testing.T) {
+	resetPricingEndpointTestTables(t)
+	insertPricingEndpointChannel(t, 602, constant.ChannelTypeOpenAI, dto.ChannelOtherSettings{})
+	insertPricingEndpointChannel(t, 603, constant.ChannelTypeCodex, dto.ChannelOtherSettings{})
+
+	for _, tc := range []struct {
+		name    string
+		model   Model
+		wantErr bool
+	}{
+		{name: "disabled requires no source", model: Model{}, wantErr: false},
+		{name: "missing source", model: Model{ShowUsage: true}, wantErr: true},
+		{name: "unknown source", model: Model{ShowUsage: true, UsageSource: "other"}, wantErr: true},
+		{name: "codex needs channel", model: Model{ShowUsage: true, UsageSource: "codex"}, wantErr: true},
+		{name: "codex rejects non codex channel", model: Model{ShowUsage: true, UsageSource: "codex", UsageChannelID: 602}, wantErr: true},
+		{name: "codex accepts codex channel", model: Model{ShowUsage: true, UsageSource: "codex", UsageChannelID: 603}, wantErr: false},
+		{name: "antigravity needs bucket IDs", model: Model{ShowUsage: true, UsageSource: "antigravity"}, wantErr: true},
+		{name: "antigravity accepts selected buckets", model: Model{ShowUsage: true, UsageSource: "antigravity", UsageBucketIDs: "gemini-5h,gemini-weekly"}, wantErr: false},
+		{name: "antigravity rejects channel", model: Model{ShowUsage: true, UsageSource: "antigravity", UsageChannelID: 603}, wantErr: true},
+		{name: "antigravity rejects invalid ID", model: Model{ShowUsage: true, UsageSource: "antigravity", UsageBucketIDs: "gemini-weekly,../secret"}, wantErr: true},
+		{name: "antigravity rejects punctuation only ID", model: Model{ShowUsage: true, UsageSource: "antigravity", UsageBucketIDs: ".."}, wantErr: true},
+		{name: "antigravity rejects duplicate ID", model: Model{ShowUsage: true, UsageSource: "antigravity", UsageBucketIDs: "gemini-weekly,gemini-weekly"}, wantErr: true},
+		{name: "antigravity rejects too many IDs", model: Model{ShowUsage: true, UsageSource: "antigravity", UsageBucketIDs: "a,b,c,d,e,f,g,h,i"}, wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateModelUsageSettings(&tc.model)
+			if tc.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestCodexUsageSettingsClearAntigravityBuckets(t *testing.T) {
+	resetPricingEndpointTestTables(t)
+	insertPricingEndpointChannel(t, 604, constant.ChannelTypeCodex, dto.ChannelOtherSettings{})
+	configured := &Model{ShowUsage: true, UsageSource: "codex", UsageChannelID: 604, UsageBucketIDs: "gemini-weekly"}
+	require.NoError(t, ValidateModelUsageSettings(configured))
+	assert.Empty(t, configured.UsageBucketIDs)
+}
+
 func TestInitChannelCacheInvalidatesPricingCache(t *testing.T) {
 	resetPricingEndpointTestTables(t)
 

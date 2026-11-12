@@ -29,16 +29,21 @@ import { StatusBadge } from '@/components/status-badge'
 import { getLobeIcon } from '@/lib/lobe-icon'
 
 import { parseTags } from '../lib/filters'
-import type { PricingModel } from '../types'
+import type { PricingModel, PricingUsageData } from '../types'
 import { CachedPriceCell } from './cached-price-cell'
 import { ModelBillingModeBadge } from './model-billing-mode-badge'
 import { ModelPriceCell, type ModelPriceCellOptions } from './model-price-cell'
+import { ModelRemainingUsage } from './model-remaining-usage'
 
 // ----------------------------------------------------------------------------
 // Pricing Table Columns
 // ----------------------------------------------------------------------------
 
-export type PricingColumnsOptions = ModelPriceCellOptions
+export type PricingColumnsOptions = ModelPriceCellOptions & {
+  usageByModel?: PricingUsageData
+  usageLoading?: boolean
+  showUsage?: boolean
+}
 
 export function usePricingColumns(
   options: PricingColumnsOptions = {}
@@ -105,6 +110,25 @@ export function usePricingColumns(
       size: 110,
       enableSorting: false,
     },
+
+    ...(options.showUsage
+      ? [
+          {
+            id: 'remaining_usage',
+            header: t('Remaining usage'),
+            cell: ({ row }) => (
+              <ModelRemainingUsage
+                model={row.original}
+                usage={options.usageByModel?.[row.original.model_name]}
+                isLoading={options.usageLoading}
+                compact
+              />
+            ),
+            size: 175,
+            enableSorting: false,
+          } satisfies ColumnDef<PricingModel>,
+        ]
+      : []),
 
     // Vendor column
     {

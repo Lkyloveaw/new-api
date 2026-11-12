@@ -118,6 +118,10 @@ func CreateModelMeta(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+	if err := model.ValidateModelUsageSettings(&m); err != nil {
+		common.ApiError(c, err)
+		return
+	}
 	// 名称冲突检查
 	if dup, err := model.IsModelNameDuplicated(0, m.ModelName); err != nil {
 		common.ApiError(c, err)
@@ -166,6 +170,10 @@ func UpdateModelMeta(c *gin.Context) {
 			return
 		}
 		if err := model.ValidateMetadataValues(model.MetadataValues{Endpoints: m.Endpoints, Status: m.Status, NameRule: m.NameRule}); err != nil {
+			common.ApiError(c, err)
+			return
+		}
+		if err := model.ValidateModelUsageSettings(&m); err != nil {
 			common.ApiError(c, err)
 			return
 		}

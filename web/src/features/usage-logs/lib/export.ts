@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { formatLogQuota, formatTimestampToDate } from '@/lib/format'
 
 import type { UsageLog } from '../data/schema'
+import { getCacheWriteTokens } from './cache-rate'
 import { logTokenName, parseLogOther, renderLogContent } from './format'
 import {
   getLogTypeConfig,
@@ -62,11 +63,7 @@ export function getLogCsvRow(
 ): string[] {
   const other = parseLogOther(log.other ?? '')
   const usage = isDisplayableLogType(log.type)
-  const cacheWrite =
-    (other?.cache_creation_tokens_5m ?? 0) +
-      (other?.cache_creation_tokens_1h ?? 0) ||
-    other?.cache_creation_tokens ||
-    0
+  const cacheWrite = getCacheWriteTokens(other)
   let channel = ''
   if (log.channel) {
     channel = log.channel_name

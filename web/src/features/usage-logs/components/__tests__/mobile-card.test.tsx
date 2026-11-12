@@ -50,7 +50,7 @@ const log = usageLogSchema.parse({
   completion_tokens: 800,
   other: JSON.stringify({
     cache_tokens: 300,
-    cache_creation_tokens_5m: 200,
+    cache_creation_tokens: 200,
     model_ratio: 1,
   }),
 })
@@ -218,12 +218,15 @@ it('respects hidden columns and omits admin fields in the self view', () => {
   expect(screen.queryByText('enterprise-production')).not.toBeInTheDocument()
 })
 
-it('keeps input, output and cache quantities readable without empty metric cells', () => {
+it('keeps input and output readable and summarises cache usage as a rate tier', () => {
   renderLogs()
   expect(screen.getByText('Input')).toBeVisible()
   expect(screen.getByText('Output')).toBeVisible()
-  expect(screen.getByText(/300/)).toBeVisible()
-  expect(screen.getByText('Cache ↑ 200')).toBeVisible()
+  expect(screen.getByText('1,200')).toBeVisible()
+  expect(screen.getByText('800')).toBeVisible()
+  // 300 cache-read tokens of 1,200 prompt tokens is 25%, the low tier.
+  expect(screen.getByTitle('Cache Rate 25%')).toHaveTextContent('区区！！')
+  expect(screen.queryByText(/Cache ↑/)).not.toBeInTheDocument()
 })
 
 it('shows the established empty state when no logs exist', () => {

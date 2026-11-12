@@ -59,6 +59,8 @@ export type PricingModel = {
   billing_plugin_variants?: BillingPluginVariant[]
   id: number
   model_name: string
+  show_usage?: boolean
+  usage_source?: 'codex' | 'antigravity'
   description?: string
   icon?: string
   vendor_id?: number
@@ -101,6 +103,29 @@ export type PricingModel = {
   input_modalities?: Modality[]
   output_modalities?: Modality[]
   capabilities?: ModelCapability[]
+}
+
+export type PricingUsageWindow = {
+  label: string
+  bucket?: string
+  remaining_percent?: number
+  remaining_amount?: number
+  reset_at?: number
+}
+
+export type PricingUsageSnapshot = {
+  source: 'codex' | 'antigravity'
+  status: 'ok' | 'unavailable'
+  windows: PricingUsageWindow[]
+  updated_at?: number
+}
+
+export type PricingUsageData = Record<string, PricingUsageSnapshot>
+
+export type PricingUsageResponse = {
+  success: boolean
+  message?: string
+  data: PricingUsageData
 }
 
 /** Input/output modalities supported by a model. */

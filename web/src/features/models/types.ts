@@ -49,6 +49,10 @@ export interface Model {
   supported_endpoints?: string[]
   status: number
   sync_official: number
+  show_usage?: boolean
+  usage_source?: string
+  usage_channel_id?: number
+  usage_bucket_ids?: string
   created_time: number
   updated_time: number
   name_rule: number
@@ -276,6 +280,10 @@ export const modelFormSchema = z.object({
   name_rule: z.number().min(0).max(3).default(0),
   status: z.boolean().default(true),
   sync_official: z.boolean().default(true),
+  show_usage: z.boolean().default(false),
+  usage_source: z.enum(['', 'codex', 'antigravity']).default(''),
+  usage_channel_id: z.number().int().min(0).default(0),
+  usage_bucket_ids: z.string().default(''),
 })
 
 export type ModelFormValues = z.infer<typeof modelFormSchema>

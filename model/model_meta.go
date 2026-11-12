@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/constant"
 
 	"gorm.io/gorm"
 )
@@ -43,6 +44,10 @@ type Model struct {
 	SupportedEndpoints []string       `json:"supported_endpoints,omitempty" gorm:"-"`
 	Status             int            `json:"status" gorm:"default:1"`
 	SyncOfficial       int            `json:"sync_official" gorm:"default:1"`
+	ShowUsage          bool           `json:"show_usage"`
+	UsageSource        string         `json:"usage_source" gorm:"size:32"`
+	UsageChannelID     int            `json:"usage_channel_id"`
+	UsageBucketIDs     string         `json:"usage_bucket_ids" gorm:"type:text"`
 	CreatedTime        int64          `json:"created_time" gorm:"bigint"`
 	UpdatedTime        int64          `json:"updated_time" gorm:"bigint"`
 	DeletedAt          gorm.DeletedAt `json:"-" gorm:"index;uniqueIndex:uk_model_name_delete_at,priority:2"`
@@ -265,8 +270,58 @@ func (mi *Model) Update() error {
 		}
 		mi.UpdatedTime = common.GetTimestamp()
 		return tx.Model(&Model{}).Where("id = ?", mi.Id).
-			Select("model_name", "description", "icon", "tags", "vendor_id", "endpoints", "status", "sync_official", "name_rule", "updated_time").Updates(mi).Error
+			Select("model_name", "description", "icon", "tags", "vendor_id", "endpoints", "status", "sync_official", "show_usage", "usage_source", "usage_channel_id", "usage_bucket_ids", "name_rule", "updated_time").Updates(mi).Error
 	})
+}
+
+// ValidateModelUsageSettings ensures a public usage display has a real source.
+// The selected channel ID is never included in public pricing JSON.
+func ValidateModelUsageSettings(mi *Model) error {
+	if mi == nil || !mi.ShowUsage {
+		return nil
+	}
+	switch mi.UsageSource {
+	case "codex":
+		if mi.UsageChannelID <= 0 {
+			return errors.New("Codex usage requires a channel ID")
+		}
+		channel, err := GetChannelById(mi.UsageChannelID, false)
+		if err != nil {
+			return errors.New("Codex usage channel not found")
+		}
+		if channel == nil || channel.Type != constant.ChannelTypeCodex {
+			return errors.New("Usage channel must be a Codex channel")
+		}
+		mi.UsageBucketIDs = ""
+	case "antigravity":
+		if mi.UsageChannelID != 0 {
+			return errors.New("Antigravity usage does not use a channel ID")
+		}
+		if len(mi.UsageBucketIDs) == 0 || len(mi.UsageBucketIDs) > 519 {
+			return errors.New("Invalid Antigravity usage bucket IDs")
+		}
+		ids := make([]string, 0, 8)
+		seen := make(map[string]bool)
+		for raw := range strings.SplitSeq(mi.UsageBucketIDs, ",") {
+			id := strings.TrimSpace(raw)
+			if len(id) == 0 || len(id) > 64 || seen[id] || len(ids) == 8 {
+				return errors.New("Invalid Antigravity usage bucket IDs")
+			}
+			for i := range len(id) {
+				b := id[i]
+				letterOrDigit := (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9')
+				if !letterOrDigit && (i == 0 || (b != '-' && b != '_' && b != '.' && b != ':')) {
+					return errors.New("Invalid Antigravity usage bucket IDs")
+				}
+			}
+			seen[id] = true
+			ids = append(ids, id)
+		}
+		mi.UsageBucketIDs = strings.Join(ids, ",")
+	default:
+		return errors.New("Invalid model usage source")
+	}
+	return nil
 }
 
 func (mi *Model) Delete() error {
